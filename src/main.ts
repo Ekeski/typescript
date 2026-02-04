@@ -1,74 +1,138 @@
-// Generic
-const echo = <T>(arg: T): T => arg
+// Utilty types
+// Partial
 
-const isObj = <T>(arg: T): boolean => {
-    return (typeof arg === 'object' && !Array.isArray
-    (arg) && arg !== null)
+interface Assignment {
+  studentId: string;
+  title: string;
+  grade?: number;
+  verified?: boolean;
 }
 
-console.log(isObj(true))
-console.log(isObj('John'))
-console.log(isObj([1,2,3]))
-console.log(isObj({name: 'John'}))
-console.log(isObj(null))
+const updateAssignment = (
+  assign: Assignment,
+  propsToUpdate: Partial<Assignment>,
+): Assignment => {
+  return { ...assign, ...propsToUpdate };
+};
 
-const isTrue = <T>(arg:T): {arg: T, is: boolean} => {
-    if (Array.isArray(arg) && !arg.length) {
-        return {arg, is: false}
-    }
-    if (isObj(arg) && !Object.keys(arg as keyof T). 
-    length){
-        return {arg, is: false}
-    }
-    return {arg, is: !!arg}
+const assign1: Assignment = {
+  studentId: "compsci123",
+  title: "Final Project",
+  grade: 0,
+};
+
+console.log(updateAssignment(assign1, { grade: 95 }));
+const assignGraded: Assignment = updateAssignment(assign1, { grade: 95 });
+
+// Required and Readonly
+
+const recordAssignment = (assign: Required<Assignment>): Assignment => {
+  // send to database, etc.
+  return assign;
+};
+
+const assignVerified: Readonly<Assignment> = {
+  ...assignGraded,
+  verified: true,
+};
+
+recordAssignment({ ...assignGraded, verified: true });
+
+// Record
+
+const hexColorMap: Record<string, string> = {
+  red: "FF0000",
+  green: "00FF00",
+  blue: "0000FF",
+};
+
+type Students = "Sara" | "Kelly";
+type LetterGrades = "A" | "B" | "C" | "D" | "U";
+
+const finalGrades: Record<Students, LetterGrades> = {
+  Sara: "A",
+  Kelly: "U",
+};
+
+interface Grades {
+  assign1: number;
+  assign2: number;
 }
 
-console.log(isTrue(false))
-console.log(isTrue(0))
-console.log(isTrue(true))
-console.log(isTrue(1))
-console.log(isTrue('Dave'))
-console.log(isTrue(''))
-console.log(isTrue(null))
-console.log(isTrue(undefined))
-console.log(isTrue({})) // modified
-console.log(isTrue({name: 'Dave'}))
-console.log(isTrue([1,2,3]))
-console.log(isTrue([])) // modified
-console.log(isTrue(NaN))
-console.log(isTrue(-0))
+const gradeData: Record<Students, Grades> = {
+  Sara: { assign1: 85, assign2: 93 },
+  Kelly: { assign1: 76, assign2: 15 },
+};
 
-interface BooCheck<T> {
-    value: T,
-    is: boolean
+// Pick and Omit
+
+type AssignmentResult = Pick<Assignment, "studentId" | "grade">;
+
+const score: AssignmentResult = {
+  studentId: "k123",
+  grade: 85,
+};
+
+type AssignmentPreview = Omit<Assignment, "grade" | "verified">;
+
+const preview: AssignmentPreview = {
+  studentId: "k123",
+  title: "Final Project",
+};
+
+// Exclude and Extract
+
+type adjustedGrade = Exclude<LetterGrades, "U">;
+
+type highGrades = Extract<LetterGrades, "A" | "B">;
+
+// NonNullable
+
+type AllPossibleGrades = "Dave" | "John" | null | undefined;
+
+type NamesOnly = NonNullable<AllPossibleGrades>;
+
+// ReturnType
+// type newAssign = { title: string, points: number}
+
+const createNewAssign = (title: string, points: number) => {
+  return { title, points };
+};
+
+type NewAssign = ReturnType<typeof createNewAssign>;
+
+const tsAssign: NewAssign = createNewAssign("Utility Types", 100);
+console.log(tsAssign);
+
+// Parameters
+
+type AssignParams = Parameters<typeof createNewAssign>;
+
+const assignArgs: AssignParams = ["Generics", 100];
+
+const tsAssign2: NewAssign = createNewAssign(...assignArgs);
+console.log(tsAssign2);
+
+// Awaited - helps with the ReturnType of a Promise
+
+interface User {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
 }
 
-const checkBoolValue = <T>(arg:T): BooCheck<T> => {
-    if (Array.isArray(arg) && !arg.length) {
-        return {value: arg, is: false}
-    }
-    if (isObj(arg) && !Object.keys(arg as keyof T). 
-    length){
-        return {value: arg, is: false}
-    }
-    return {value: arg, is: !!arg}
-}
+const fetchUsers = async (): Promise<User[]> => {
+  const data = await fetch("https://jsonplaceholder.typicode.com/users")
+    .then((res) => {
+      return res.json();
+    })
+    .catch((err) => {
+      if (err instanceof Error) console.log(err.message);
+    });
+  return data;
+};
 
-// Extending Generic Types
-interface HasID {
-    id:number
-}
+type FetchUsersReturnType = Awaited<ReturnType<typeof fetchUsers>>;
 
-const processUser = <T extends HasID>(user: T): T =>
-{
-    // Process the User with logic here
-    return user
-}
-
-console.log(processUser({id:1, name: 'Dave'}))
-// console.log(processUser({ name: 'Dave'}))
-
-const getUsersProperty = <T extends HasID, K extends 
-keyof T>(users: T[], key: K): T[K][] => {
-    return users.map(user => user[key])
-}
+fetchUsers().then(users => console.log(users));
